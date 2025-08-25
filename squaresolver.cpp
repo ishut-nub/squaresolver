@@ -17,14 +17,21 @@ struct test_data
 {
     double compare_coeff_a, compare_coeff_b, compare_coeff_c;
     double compare_root_1, compare_root_2;
-    root_counter compare_root_count;
+    int compare_root_count;
 };
 
-void input_coeffs(double *coeff_a, double *coeff_b, double *coeff_c);
+struct equation_info
+{
+    double coeff_a, coeff_b, coeff_c;
+    double root_1, root_2;
+    int root_count;
+};
 
-int linear_equation(double coeff_a, double coeff_b, double coeff_c, double *root_1, double *root_2);
-int quadratic_equation(double coeff_a, double coeff_b, double coeff_c, double *root_1, double *root_2);
-int solver(double coeff_a, double coeff_b, double coeff_c, double *root_1, double *root_2);
+void input_coeffs(equation_info *info);
+
+int linear_equation(equation_info *info);
+int quadratic_equation(equation_info *info);
+int solver(equation_info *info);
 
 int compare_double(double test_x, double test_y);
 double find_min(double min_1, double min_2);
@@ -34,46 +41,57 @@ double check_input(char symbol);
 
 void clear_buffer(void);
 
-int solver_tester(test_data test);
-int run_test(void);
+int solver_tester(test_data *test, equation_info *info);
+int run_test(equation_info *info);
 
-void output_roots(int root_count, double *root_1, double *root_2);
+void output_roots(equation_info *info);
 
 int main(void)
 {
-    double coeff_a = NAN, coeff_b = NAN, coeff_c = NAN;
-    double root_1 = NAN, root_2 = NAN;
-    int root_count = 0;
+    struct equation_info info = {.coeff_a = NAN, .coeff_b = NAN, .coeff_c = NAN, .root_1 = NAN, .root_2 = NAN, .root_count = NO_ROOTS};
+    input_coeffs(&info);
 
-    input_coeffs(&coeff_a, &coeff_b, &coeff_c);
+//    assert(!(isnan(info.coeff_a)));
+//    assert(!(isnan(info.coeff_b)));
+//    assert(!(isnan(info.coeff_c)));
 
-    assert(!(isnan(coeff_a)));
-    assert(!(isnan(coeff_b)));
-    assert(!(isnan(coeff_c)));
+    info.root_count = solver(&info);
 
-    root_count = solver(coeff_a, coeff_b, coeff_c, &root_1, &root_2);
+    output_roots(&info);
 
-    output_roots(root_count, &root_1, &root_2);
-
-    int result = run_test();
+    int result = run_test(&info);
     printf("Failed %d tests\n", result);
     return 0;
 }
 
-void input_coeffs(double *coeff_a, double *coeff_b, double *coeff_c)
+void input_coeffs(equation_info *info)
 {
     printf("Your equation will look like this: ax^2+bx+c\n");
     printf("Please enter coefficients\n");
 
-    *coeff_a = check_input('a');
-    *coeff_b = check_input('b');
-    *coeff_c = check_input('c');
+    info->coeff_a = check_input('a');
+    info->coeff_b = check_input('b');
+    info->coeff_c = check_input('c');
     return;
 }
 
-void output_roots(int root_count, double *root_1, double *root_2)
+double check_input(char symbol)
 {
-    switch (root_count)
+    printf("Input %c\n", symbol);
+    double number_input = 0;
+
+    while (scanf("%lg", &number_input) != 1) {
+
+        clear_buffer();
+    }
+    printf("%c = %lg\n", symbol, number_input);
+
+    return number_input;
+}
+
+void output_roots(equation_info *info)
+{
+    switch (info->root_count)
     {
         case INF_ROOTS:
             printf("Infinite amount of solutions\n");
@@ -82,20 +100,20 @@ void output_roots(int root_count, double *root_1, double *root_2)
             printf("No solutions\n");
             break;
         case ONE_ROOT:
-            printf("Equation has 1 solution, %lg\n", *root_1);
+            printf("Equation has 1 solution, %lg\n", info->root_1);
             break;
         case TWO_ROOTS:
-            printf("Equation has 2 solutions, %lg and %lg\n", *root_1, *root_2);
+            printf("Equation has 2 solutions, %lg and %lg\n", info->root_1, info->root_2);
             break;
         default:
             printf("How did you even get there?\n");
     }
 }
-int linear_equation(double coeff_a, double coeff_b, double coeff_c, double *root_1, double *root_2)
+int linear_equation(equation_info *info)
 {
-    if (compare_double(coeff_b,0))
+    if (compare_double(info->coeff_b,0))
     {
-        if (compare_double(coeff_c,0))
+        if (compare_double(info->coeff_c,0))
         {
             return INF_ROOTS;
         }
@@ -106,24 +124,25 @@ int linear_equation(double coeff_a, double coeff_b, double coeff_c, double *root
     }
     else
     {
-        *root_1 = *root_2 = (-coeff_c/coeff_b);
+        info->root_1 = info->root_2 = (-info->coeff_c/info->coeff_b);
         return ONE_ROOT;
     }
 }
 
-int quadratic_equation(double coeff_a, double coeff_b, double coeff_c, double *root_1, double *root_2)
+int quadratic_equation(equation_info *info)
 {
-    double discriminant = coeff_b * coeff_b - 4 * coeff_a * coeff_c;
+    double discriminant = info->coeff_b * info->coeff_b - 4 * info->coeff_a * info->coeff_c;
+    double sqrt_discriminant = sqrt(discriminant);
 
     if (discriminant > 0)
     {
-        *root_1 = find_min((-coeff_b + sqrt(discriminant)) / (2 * coeff_a), (-coeff_b - sqrt(discriminant)) / (2 * coeff_a));
-        *root_2 = find_max((-coeff_b + sqrt(discriminant)) / (2 * coeff_a), (-coeff_b - sqrt(discriminant)) / (2 * coeff_a));
+        info->root_1 = find_min((-info->coeff_b + sqrt_discriminant) / (2 * info->coeff_a), (-info->coeff_b - sqrt_discriminant) / (2 * info->coeff_a));
+        info->root_2 = find_max((-info->coeff_b + sqrt_discriminant) / (2 * info->coeff_a), (-info->coeff_b - sqrt_discriminant) / (2 * info->coeff_a));
         return TWO_ROOTS;
     }
     else if (compare_double(discriminant, 0))
     {
-        *root_1 = *root_2 = (-coeff_b / (2 * coeff_a));
+        info->root_1 = info->root_2 = (-info->coeff_b / (2 * info->coeff_a));
         return ONE_ROOT;
     }
     else
@@ -132,33 +151,25 @@ int quadratic_equation(double coeff_a, double coeff_b, double coeff_c, double *r
     }
 }
 
-int solver(double coeff_a, double coeff_b, double coeff_c, double *root_1, double *root_2)
+int solver(equation_info *info)
 {
-    if (compare_double(coeff_a, 0)) {
-        return linear_equation(coeff_a, coeff_b, coeff_c, root_1, root_2);
+    if (compare_double(info->coeff_a, 0)) {
+        return linear_equation(info);
     }
-    return quadratic_equation(coeff_a, coeff_b, coeff_c, root_1, root_2);
+    return quadratic_equation(info);
 }
 
 int compare_double(double double_a, double double_b)
 {
+    if (!(isnan(double_a)) && (isnan(double_b)))
+        return 1;
+    if (isnan(double_a) && (!(isnan(double_b))))
+        return 1;
     if (isnan(double_a) && isnan(double_b))
         return 1;
     return (fabs(double_a - double_b) < ACCURACY_LIMIT);
 }
 
-double check_input(char symbol)
-{
-    printf("Input %c\n", symbol);
-    double number_input = 0;
-
-    while (scanf("%lg", &number_input) != 1) {
-        clear_buffer();
-    }
-    printf("%c = %lg\n", symbol, number_input);
-
-    return number_input;
-}
 void clear_buffer(void)
 {
     int ch = 0;
@@ -169,22 +180,21 @@ void clear_buffer(void)
     printf(" is not a number. \nPlease, re-enter your number \n");
 }
 
-int solver_tester(test_data test)
+int solver_tester(test_data *test, equation_info *info)
 {
-    double root_1 = NAN, root_2 = NAN;
-    int root_count = solver(test.compare_coeff_a, test.compare_coeff_b, test.compare_coeff_c, &root_1, &root_2);
+    info->root_count = solver(info);
 
-    if (!(compare_double(root_1, find_min(test.compare_root_1, test.compare_root_2)) && compare_double(root_2, find_max(test.compare_root_1, test.compare_root_2)) && root_count == test.compare_root_count))
+    if (!(compare_double(find_min(info->root_1, info->root_2), find_min(test->compare_root_1, test->compare_root_2)) && compare_double(find_max(info->root_1, info->root_2),find_max(test->compare_root_1, test->compare_root_2)) && info->root_count == test->compare_root_count))
     {
-        printf("Test failed \nRoots %lg %lg instead of %lg %lg \n", root_1, root_2, test.compare_root_1, test.compare_root_2);
-        printf("Number of roots %d instead of %d\n", root_count, test.compare_root_count);
+        printf("Test failed \nRoots %lg %lg instead of %lg %lg \n", info->root_1, info->root_2, test->compare_root_1, test->compare_root_2);
+        printf("Number of roots %d instead of %d\n", info->root_count, test->compare_root_count);
         return 1;
     }
     else
         return 0;
 }
 
-int run_test()
+int run_test(equation_info *info)
 {
     int test_failed = 0;
     test_data tests[] =
@@ -199,31 +209,30 @@ int run_test()
     };
     size_t size = sizeof(tests)/sizeof(tests[0]);
     for (long unsigned int i = 0; i<size; i++) {
-        if (solver_tester(tests[i]) == 1) {
-            test_failed +=1;
-        }
+        test_failed += solver_tester(&tests[i], info);
+
     }
     return test_failed;
 }
 
-//int run_test()
-//{
-//    int test_failed = 0;
-//  test_failed += solver_tester(1, 3, -4,  1, -4, TWO_ROOTS);
-//    test_failed += solver_tester(0, 0,  0,  NAN,  NAN, INF_ROOTS);
-//    test_failed += solver_tester(0, 0,  1,  NAN,  NAN, NO_ROOTS);
-//    test_failed += solver_tester(0, 3, -3,  1,  1, ONE_ROOT);
-//    test_failed += solver_tester(1, 2,  1, -1, -1, ONE_ROOT);
-//    test_failed += solver_tester(1, 3,  5,  NAN,  NAN, NO_ROOTS);
-//    return test_failed;
-//}
-
 double find_min(double min_1, double min_2)
 {
+    if (!(isnan(min_1)) && (isnan(min_2)))
+        return min_1;
+    if (isnan(min_1) && (!(isnan(min_2))))
+        return min_2;
+    if (isnan(min_1) && isnan(min_2))
+        return min_1;
     return (min_1 <= min_2)? min_1 : min_2;
 }
 
 double find_max(double max_1, double max_2)
 {
+    if (!(isnan(max_1)) && (isnan(max_2)))
+        return max_1;
+    if (isnan(max_1) && (!(isnan(max_2))))
+        return max_2;
+    if (isnan(max_1) && isnan(max_2))
+        return max_1;
     return (max_1 >= max_2)? max_1 : max_2;
 }
