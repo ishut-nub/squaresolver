@@ -39,7 +39,7 @@ double find_max(double max_1, double max_2);
 
 double check_input(char symbol);
 
-void clear_buffer(void);
+int clear_buffer(void);
 
 int solver_tester(test_data *test, equation_info *info);
 int run_test(equation_info *info);
@@ -78,15 +78,28 @@ void input_coeffs(equation_info *info)
 double check_input(char symbol)
 {
     printf("Input %c\n", symbol);
-    double number_input = 0;
-
-    while (scanf("%lg", &number_input) != 1) {
-
-        clear_buffer();
+    int ch = 1;
+    double number_input = NAN;
+    while (ch == 1)
+    {
+        if (scanf("%lg", &number_input))
+            ch = 0;
+        if (clear_buffer())
+            ch = 1;
+        if (ch == 1)
+            printf("Incorrect input\n"
+                   "Input %c\n", symbol);
     }
-    printf("%c = %lg\n", symbol, number_input);
-
     return number_input;
+}
+
+int clear_buffer(void)
+{
+    int ch = 0;
+
+    while (getchar() != '\n')
+        ch++;
+    return ch;
 }
 
 void output_roots(equation_info *info)
@@ -170,24 +183,14 @@ int compare_double(double double_a, double double_b)
     return (fabs(double_a - double_b) < ACCURACY_LIMIT);
 }
 
-void clear_buffer(void)
-{
-    int ch = 0;
-
-    while ((ch = getchar()) != '\n')
-        putchar(ch);
-
-    printf(" is not a number. \nPlease, re-enter your number \n");
-}
-
 int solver_tester(test_data *test, equation_info *info)
 {
     info->root_count = solver(info);
 
     if (!(compare_double(find_min(info->root_1, info->root_2), find_min(test->compare_root_1, test->compare_root_2)) && compare_double(find_max(info->root_1, info->root_2),find_max(test->compare_root_1, test->compare_root_2)) && info->root_count == test->compare_root_count))
     {
-        printf("Test failed \nRoots %lg %lg instead of %lg %lg \n", info->root_1, info->root_2, test->compare_root_1, test->compare_root_2);
-        printf("Number of roots %d instead of %d\n", info->root_count, test->compare_root_count);
+        printf("Test failed \nRoots %lg %lg instead of %lg %lg \n"
+               "Number of roots %d instead of %d\n", info->root_1, info->root_2, test->compare_root_1, test->compare_root_2, info->root_count, test->compare_root_count);
         return 1;
     }
     else
@@ -199,18 +202,19 @@ int run_test(equation_info *info)
     int test_failed = 0;
     test_data tests[] =
     {
-        {.compare_coeff_a =  1, .compare_coeff_b =  3, .compare_coeff_c = -4, .compare_root_1 =  -4, .compare_root_2 =   1, .compare_root_count = TWO_ROOTS},
-        {.compare_coeff_a =  0, .compare_coeff_b =  0, .compare_coeff_c =  0, .compare_root_1 = NAN, .compare_root_2 = NAN, .compare_root_count = INF_ROOTS},
-        {.compare_coeff_a =  0, .compare_coeff_b =  0, .compare_coeff_c =  1, .compare_root_1 = NAN, .compare_root_2 = NAN, .compare_root_count =  NO_ROOTS},
-        {.compare_coeff_a =  0, .compare_coeff_b =  3, .compare_coeff_c = -3, .compare_root_1 =   1, .compare_root_2 =   1, .compare_root_count =  ONE_ROOT},
-        {.compare_coeff_a =  1, .compare_coeff_b =  2, .compare_coeff_c =  1, .compare_root_1 =  -1, .compare_root_2 =  -1, .compare_root_count =  ONE_ROOT},
-        {.compare_coeff_a =  1, .compare_coeff_b =  3, .compare_coeff_c =  5, .compare_root_1 = NAN, .compare_root_2 = NAN, .compare_root_count =  NO_ROOTS},
-        {.compare_coeff_a = -1, .compare_coeff_b = -3, .compare_coeff_c =  4, .compare_root_1 =  -4, .compare_root_2 =   1, .compare_root_count = TWO_ROOTS},
+        { 1,  3, -4,  -4,   1, TWO_ROOTS},
+        { 0,  0,  0, NAN, NAN, INF_ROOTS},
+        { 0,  0,  1, NAN, NAN,  NO_ROOTS},
+        { 0,  3, -3,   1,   1,  ONE_ROOT},
+        { 1,  2,  1,  -1,  -1,  ONE_ROOT},
+        { 1,  3,  5, NAN, NAN,  NO_ROOTS},
+        {-1, -3,  4,  -4,   1, TWO_ROOTS},
     };
-    size_t size = sizeof(tests)/sizeof(tests[0]);
-    for (long unsigned int i = 0; i<size; i++) {
-        test_failed += solver_tester(&tests[i], info);
 
+    size_t size = sizeof(tests)/sizeof(tests[0]);
+
+    for (long unsigned int i = 0; i < size; i++) {
+        test_failed += solver_tester(&tests[i], info);
     }
     return test_failed;
 }
@@ -223,7 +227,7 @@ double find_min(double min_1, double min_2)
         return min_2;
     if (isnan(min_1) && isnan(min_2))
         return min_1;
-    return (min_1 <= min_2)? min_1 : min_2;
+    return fmin(min_1, min_2);
 }
 
 double find_max(double max_1, double max_2)
@@ -234,5 +238,5 @@ double find_max(double max_1, double max_2)
         return max_2;
     if (isnan(max_1) && isnan(max_2))
         return max_1;
-    return (max_1 >= max_2)? max_1 : max_2;
+    return fmax(max_1, max_2);
 }
