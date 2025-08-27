@@ -12,6 +12,7 @@ enum root_counter
 };
 
 const double ACCURACY_LIMIT = 1e-15;
+const int ROWS = 6;
 
 struct test_data
 {
@@ -40,9 +41,7 @@ root_counter solver(equation_data *data);
 int doubles_equality(double test_x, double test_y);
 double find_min(double min_1, double min_2);
 double find_max(double max_1, double max_2);
-
 double check_input(char symbol);
-
 int clear_buffer(void);
 
 int solver_tester(test_data *test, equation_data *data);
@@ -293,17 +292,25 @@ int solver_tester(test_data *test, equation_data *data)
 
 void run_test(equation_data *data)
 {
+    FILE *file;
+    int j = 0;
+    file = fopen("tests.txt", "r");
+    if (file == NULL) {
+        printf("Failed to open");
+    }
+
+    test_data tests[ROWS];
+
+    for (j = 0; j < ROWS; j++) {
+        if (fscanf(file, "%lg %lg %lg %lg %lg %d", &tests[j].compare_coeff_a, &tests[j].compare_coeff_b,
+                                                   &tests[j].compare_coeff_c, &tests[j].compare_root_1,
+                                                   &tests[j].compare_root_2, &tests[j].compare_root_count) != 6) {
+            printf("Failed to read");
+            fclose(file);
+        }
+    }
+
     int test_failed = 0;
-    test_data tests[] =
-    {
-        { 1,  3, -4,  -4,   1, TWO_ROOTS},
-        { 0,  0,  0, NAN, NAN, INF_ROOTS},
-        { 0,  0,  1, NAN, NAN,  NO_ROOTS},
-        { 0,  3, -3,   1,   1,  ONE_ROOT},
-        { 1,  2,  1,  -1,  -1,  ONE_ROOT},
-        { 1,  3,  5, NAN, NAN,  NO_ROOTS},
-        {-1, -3,  4,  -4,   1, TWO_ROOTS},
-    }; //TODO from file tests[6]
 
     size_t size = sizeof(tests)/sizeof(tests[0]);
 
