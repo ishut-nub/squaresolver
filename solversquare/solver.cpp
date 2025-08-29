@@ -2,6 +2,7 @@
 #include <math.h>
 #include <ctype.h>
 #include <assert.h>
+#include <stdlib.h>
 #include "solver.h"
 
 root_counter linear_equation(equation_data *data)

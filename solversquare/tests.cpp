@@ -2,6 +2,7 @@
 #include <math.h>
 #include <ctype.h>
 #include <assert.h>
+#include <stdlib.h>
 #include "tests.h"
 
 int solver_tester(test_data *test, equation_data *data)
@@ -18,8 +19,8 @@ int solver_tester(test_data *test, equation_data *data)
 
     if (!(compare_test_roots(test, data) && (data->root_count == test->compare_root_count)))
     {
-        printf("Test failed \nRoots %lg %lg instead of %lg %lg \n"
-               "Number of roots %d instead of %d\n\n",
+        printf("\033[1;31mTest failed \n\033[1;35mRoots\033[1;0m \033[1;31m%lg %lg\033[1;0m \033[1;35minstead of\033[1;0m \033[1;32m%lg %lg\033[1;0m \n"
+               "\033[1;36mNumber of roots \033[1;31m%d\033[1;0m \033[1;36minstead of\033[1;0m \033[1;32m%d\033[1;0m\n\n",
                data->root_1, data->root_2, test->compare_root_1, test->compare_root_2,
                data->root_count, test->compare_root_count);
         return 1;
@@ -31,31 +32,48 @@ int solver_tester(test_data *test, equation_data *data)
 void run_test(equation_data *data)
 {
     FILE *file;
-    int j = 0;
     file = fopen("tests.txt", "r");
+
     if (file == NULL) {
-        printf("Failed to open");
+        printf("\033[1;31mFailed to open\033[1;0m");
     }
 
-    test_data tests[ROWS];
+    char ch = 0;
+    long unsigned int row_count = 0;
 
-    for (j = 0; j < ROWS; j++) {
+    while (fscanf(file, "%c", &ch) == 1 && ch != EOF)
+    {
+        if (ch == '\n') {
+            row_count++;
+        }
+    }
+
+    rewind(file);
+
+    struct test_data* tests;
+    tests = (struct test_data*) calloc(row_count, sizeof(test_data));
+
+    for (long unsigned int j = 0; j < row_count; j++) {
         if (fscanf(file, "%lg %lg %lg %lg %lg %d", &tests[j].compare_coeff_a, &tests[j].compare_coeff_b,
                                                    &tests[j].compare_coeff_c, &tests[j].compare_root_1,
                                                    &tests[j].compare_root_2, (int*) &tests[j].compare_root_count) != 6) {
-            printf("Failed to read");
+            printf("\033[1;31mFailed to read\033[1;0m");
+
             fclose(file);
         }
     }
 
+    fclose(file);
+
     int test_failed = 0;
 
-    size_t size = sizeof(tests)/sizeof(tests[0]);
-
-    for (long unsigned int i = 0; i < size; i++) {
+    for (long unsigned int i = 0; i < row_count; i++) {
         test_failed += solver_tester(&tests[i], data);
     }
-    printf("\nFailed %d tests\n\n", test_failed);
+    printf("\n\033[1;31mFailed\033[1;0m \033[1;37m%d tests\033[1;0m\n\n", test_failed);
+
+    free(tests);
+
     return;
 }
 

@@ -2,6 +2,7 @@
 #include <math.h>
 #include <ctype.h>
 #include <assert.h>
+#include <stdlib.h>
 #include "utility.h"
 
 double check_input(char symbol)
@@ -9,7 +10,7 @@ double check_input(char symbol)
     bool correct_input = 1;
     double number_input = NAN;
 
-    printf("Input %c\n", symbol);
+    printf("\033[1;36mInput %c\033[1;0m\n", symbol);
 
     while (correct_input == 1)
     {
@@ -20,8 +21,8 @@ double check_input(char symbol)
             correct_input = 1;
         }
         if (correct_input == 1) {
-            printf("Incorrect input\n"
-                   "Input %c\n", symbol);
+            printf("\033[1;31mIncorrect input\033[1;0m\n"
+                   "\033[1;36mInput %c\033[1;0m\n", symbol);
         }
     }
     return number_input;

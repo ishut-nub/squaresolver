@@ -10,7 +10,6 @@ enum root_counter
 };
 
 const double ACCURACY_LIMIT = 1e-15;
-const int ROWS = 6;
 
 struct test_data
 {
