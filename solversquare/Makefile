@@ -6,16 +6,22 @@ all: square_equation
 
 square_equation: main.o input_output.o solver.o tests.o utility.o
 	$(CC) $(CFLAGS) main.o input_output.o solver.o tests.o utility.o -o solversquare
+
 main.o: main.cpp
 	$(CC) $(CFLAGS) -c main.cpp
+
 input_output.o: input_output.cpp
 	$(CC) $(CFLAGS) -c input_output.cpp
+
 solver.o: solver.cpp
 	$(CC) $(CFLAGS) -c solver.cpp
+
 tests.o: tests.cpp
 	$(CC) $(CFLAGS) -c tests.cpp
+
 utility.o: utility.cpp
 	$(CC) $(CFLAGS) -c utility.cpp
+
 clean:
 	rm -rf *.o square_equation
 
